@@ -3,50 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Calendar API 測試</title>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <title>Google OAuth 測試</title>
+    <script async defer src="https://apis.google.com/js/api.js" onload="initGAPI()"></script>
 </head>
 <body>
-    <h1>Google Calendar API 測試</h1>
+    <h1>Google OAuth 測試</h1>
     <button onclick="authenticate()">登入 Google</button>
-    <button onclick="loadClient()">載入 API</button>
-    <button onclick="getCalendarEvents()">獲取行事曆事件</button>
     <pre id="output"></pre>
 
     <script>
-        const CLIENT_ID = "653948988320-6ohuckf4ea4pa85fmaqmt64nba1l401a.apps.googleusercontent.com";
-        const API_KEY = "AIzaSyAP_o3c98fR6Z-5_iFEqsUzeKui7BOd9Kg";
+        const CLIENT_ID = "你的_CLIENT_ID";
 
-        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
-        const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
+        function initGAPI() {
+            console.log("✅ Google API 載入成功");
+            gapi.load("client:auth2", () => {
+                gapi.auth2.init({client_id: CLIENT_ID}).then(() => {
+                    console.log("✅ Google Auth2 初始化成功");
+                }).catch(err => console.error("❌ Google Auth2 初始化失敗:", err));
+            });
+        }
 
         function authenticate() {
-            return gapi.auth2.getAuthInstance()
-                .signIn()
-                .then(() => console.log("✅ 登入成功"),
-                      err => console.error("❌ 登入失敗:", err));
+            if (!gapi.auth2) {
+                console.error("❌ gapi.auth2 尚未載入，請稍後再試");
+                return;
+            }
+            const auth2 = gapi.auth2.getAuthInstance();
+            auth2.signIn({prompt: 'select_account'}).then(user => {
+                console.log("✅ 登入成功", user);
+                document.getElementById("output").innerText = JSON.stringify(user.getBasicProfile(), null, 2);
+            }).catch(err => console.error("❌ 登入失敗:", err));
         }
-
-        function loadClient() {
-            gapi.client.setApiKey(API_KEY);
-            return gapi.client.load(DISCOVERY_DOCS[0])
-                .then(() => console.log("✅ Google API 載入成功"),
-                      err => console.error("❌ Google API 載入失敗:", err));
-        }
-
-        function getCalendarEvents() {
-            gapi.client.calendar.events.list({
-                'calendarId': 'primary',
-                'timeMin': (new Date()).toISOString(),
-                'showDeleted': false,
-                'singleEvents': true,
-                'maxResults': 10,
-                'orderBy': 'startTime'
-            }).then(response => {
-                const events = response.result.items;
-                document.getElementById("output").innerText = JSON.stringify(events, null, 2);
-                console.log("✅ 成功獲取行事曆事件", events);
-            }).catch(err => console.error("❌ 獲取行事曆事件失敗:", err));
-        }
-
-        gapi.lo
+    </script>
+</body>
+</html>
